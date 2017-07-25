@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+
+<title> ASSIGNMENT 4 </title>
+
+<script id="sphereRv" type="x-shader/x-vertex">
+attribute vec4 vPosition;
+attribute vec4 vNormal;
+varying vec4 fColor;
+uniform mat4 modelViewMatrix;
+uniform mat4 projectionMatrix;
+uniform vec4 ambientProduct;
+uniform vec4 diffuseProduct;
+uniform vec4 specularProduct;
+uniform vec4 lightPosition;
+uniform float shininess;
+uniform mat3 normalMatrix;
+
+void main() {
+    vec3 pos = (modelViewMatrix * vPosition).xyz;
+    
+    vec3 L;
+    
+    if(lightPosition.w == 0.0) L = normalize(lightPosition.xyz);
+    else L = normalize(lightPosition.xyz - pos);
+    
+    vec3 E = -normalize(pos);
+    
+    vec3 H = normalize(L + E);
+    
+    vec3 N = normalize(normalMatrix * vNormal.xyz);
+    
+    vec4 ambient = ambientProduct;
+    
+    float Kd = max(dot(L, N), 0.0);
+    vec4 diffuse = Kd * diffuseProduct;
+    
+    float Ks = pow(max(dot(N, H), 0.0), shininess);
+    vec4 specular = Ks * specularProduct;
+    
+    if(dot(L, N) < 0.0) specular = vec4(0.0, 0.0, 0.0, 1.0);
+
+    fColor = ambient + diffuse;
+    fColor.a = 1.0;    
+    mat4 SnT = mat4(0.3, 0.0, 0.0, 0.0,
+                    0.0, 0.3, 0.0, 0.0,
+                    0.0, 0.0, 0.3, 0.0,
+                   -0.7, 0.0,-0.7, 1.0);
+    
+    gl_Position = projectionMatrix * modelViewMatrix * SnT * vPosition;
+}
+</script>
+
+<script id="sphereRc" type="x-shader/x-fragment">
+precision mediump float;
+varying vec4 fColor;
+
+void main() {
+    gl_FragColor = fColor;
+}
+</script>
+
+<script id="sphereBv" type="x-shader/x-vertex">
+attribute vec4 vPosition;
+attribute vec4 vNormal;
+varying vec3 N;
+varying vec3 L;
+varying vec3 E;
+uniform mat4 modelViewMatrix;
+uniform mat4 projectionMatrix;
+uniform vec4 lightPosition;
+uniform mat3 normalMatrix;
+
+void main() {
+
+    vec3 pos = (modelViewMatrix * vPosition).xyz;
+
+    if(lightPosition.w == 0.0) L = normalize(lightPosition.xyz);
+    else L = normalize(lightPosition.xyz - pos);
+    
+    E = -normalize(pos);
+    
+    N = normalize(normalMatrix * vNormal.xyz);
+    
+    mat4 SnT = mat4(0.3, 0.0, 0.0, 0.0,
+                    0.0, 0.3, 0.0, 0.0,
+                    0.0, 0.0, 0.3, 0.0,
+                    0.7, 0.0,-0.7, 1.0);
+    
+    gl_Position = projectionMatrix * modelViewMatrix * SnT * vPosition;
+}
+</script>
+
+<script id="sphereBc" type="x-shader/x-fragment">
+precision mediump float;
+varying vec3 N;
+varying vec3 L;
+varying vec3 E;
+uniform vec4 ambientProduct;
+uniform vec4 diffuseProduct;
+uniform vec4 specularProduct;
+uniform float shininess;
+
+void main() {
+    vec4 fColor;
+    
+    vec3 H = normalize(L + E);
+    
+    vec4 ambient = ambientProduct;
+    
+    float Kd = max(dot(L, N), 0.0);
+    vec4 diffuse = Kd * diffuseProduct;
+    
+    float Ks = pow(max(dot(N, H), 0.0), shininess);
+    vec4 specular = Ks * specularProduct;
+    
+    if(dot(L, N) < 0.0) specular = vec4(0.0, 0.0, 0.0, 1.0);
+
+    fColor = ambient + specular;
+    fColor.a = 1.0;
+    
+    gl_FragColor = fColor;
+}
+</script>
+<script id="floorV" type="x-shader/x-vertex">
+attribute vec4 vPosition;
+attribute vec2 vTexCoord;
+varying vec2 fTexCoord;
+uniform mat4 modelViewMatrix;
+uniform mat4 projectionMatrix;
+
+void main() {
+    mat4 SnT = mat4(1,   0, 0, 0,
+                    0,   1, 0, 0,
+                    0,   0, 1, 0,
+                    0, 0.7, 0, 1);
+    
+    gl_Position = projectionMatrix * modelViewMatrix * SnT * vPosition;
+    fTexCoord = vTexCoord;
+}
+</script>
+
+<script id="floorC" type="x-shader/x-fragment">
+precision mediump float;
+varying vec2 fTexCoord;
+uniform sampler2D texture;
+
+void main() {
+    vec4 fColor = vec4(0, 1, 1, 1);
+    gl_FragColor = fColor * texture2D(texture, fTexCoord);
+}
+</script>
+
+<script type="text/javascript" src="webgl-utils.js"></script>
+<script type="text/javascript" src="initShaders.js"></script>
+<script type="text/javascript" src="MV.js"></script>
+<script type="text/javascript" src="assignment4.js"></script>
+
+<body>
+<button id="toggle">Toggle Light</button></br></br>
+<canvas id="canvas" width="600" height="600">
+Oops... Your browser doesn't support the HTML5 canvas element.
+</canvas>
+</body>
+</html>
